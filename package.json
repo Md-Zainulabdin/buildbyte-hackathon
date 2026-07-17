@@ -1,0 +1,23 @@
+{
+  "name": "buildbyte-hackathon",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=web",
+    "dev:api": "turbo run dev:api --filter=api",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "check-types": "turbo run check-types",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+  },
+  "packageManager": "npm@11.6.2",
+  "devDependencies": {
+    "prettier": "^3.7.4",
+    "turbo": "^2.10.5",
+    "typescript": "5.9.2"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
