@@ -1,38 +1,89 @@
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, MapPin, Calendar, Clock, Building2 } from "lucide-react";
-import { getOpportunities, safeJSON } from "../lib/helpers";
-import type { Opportunity } from "../types/opportunity";
+import { useAuth } from "../context/AuthContext";
+import { ArrowLeft, MapPin, Calendar, Clock, Building2, Star, Loader2 } from "lucide-react";
+import { opportunitiesApi, type OpportunityResponse } from "../lib/api";
+import { applicationsApi, type ApplicationCreate } from "../lib/api";
+import { reviewsApi, type ReviewResponse } from "../lib/api";
 
 export default function OpportunityDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
-  const opportunity = useMemo(() => {
-    return getOpportunities().find((o: Opportunity) => o.id === id);
-  }, [id]);
+  const [opportunity, setOpportunity] = useState<OpportunityResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [applied, setApplied] = useState(false);
+  const [completed, setCompleted] = useState(false);
+  const [reviews, setReviews] = useState<ReviewResponse[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const applied = useMemo(() => {
-    const stored = localStorage.getItem("applications");
-    const apps = safeJSON<{ opportunityId: string }[]>(stored || "[]", []);
-    return apps.some((a) => a.opportunityId === id);
-  }, [id]);
+  useEffect(() => {
+    if (authLoading) return;
+    loadOpportunity();
+    if (isAuthenticated) {
+      checkApplicationStatus();
+      loadReviews();
+    }
+  }, [id, authLoading, isAuthenticated]);
 
-  const completed = useMemo(() => {
-    const stored = localStorage.getItem("completedTasks");
-    const all = safeJSON<{ opportunityId: string }[]>(stored || "[]", []);
-    return all.some((s) => s.opportunityId === id);
-  }, [id]);
-
-  function handleApply() {
+  async function loadOpportunity() {
     if (!id) return;
-    const applications = safeJSON<Record<string, string>[]>(localStorage.getItem("applications") || "[]", []);
-    applications.push({ opportunityId: id, appliedAt: new Date().toISOString() });
-    localStorage.setItem("applications", JSON.stringify(applications));
-    navigate("/opportunities");
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await opportunitiesApi.get(id);
+      setOpportunity(res.data);
+    } catch {
+      setError("Failed to load opportunity");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
-  if (!opportunity) {
+  async function checkApplicationStatus() {
+    if (!id) return;
+    try {
+      const res = await applicationsApi.listMy("provider");
+      const app = res.data.find((a) => a.opportunity_id === id);
+      if (app) {
+        setApplied(true);
+        if (app.status === "accepted") setCompleted(true);
+      }
+    } catch {}
+  }
+
+  async function loadReviews() {
+    if (!id || !opportunity) return;
+    try {
+      const res = await reviewsApi.listForUser(opportunity.creator_id);
+      setReviews(res.data);
+    } catch {}
+  }
+
+  async function handleApply() {
+    if (!id || !isAuthenticated) return;
+    try {
+      await applicationsApi.apply(id, { message: "" });
+      setApplied(true);
+      navigate("/opportunities");
+    } catch {
+      alert("Failed to apply. Please try again.");
+    }
+  }
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="mx-auto mb-6 h-8 w-8 animate-pulse rounded-full border-2 border-gray-300 border-t-gray-600" />
+          <p className="font-serif text-2xl text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !opportunity) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-white px-6">
         <div className="text-center">
@@ -44,6 +95,10 @@ export default function OpportunityDetail() {
       </div>
     );
   }
+
+  const averageRating = reviews.length > 0
+    ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+    : 0;
 
   return (
     <div className="min-h-dvh bg-white px-6 py-28 sm:px-10 sm:py-32">
@@ -62,12 +117,21 @@ export default function OpportunityDetail() {
           </span>
           <span
             className={`shrink-0 rounded-full px-3 py-0.5 text-[10px] font-medium tracking-[0.1em] uppercase ${
-              opportunity.paid === "Paid"
-                ? "bg-emerald-50 text-emerald-600"
-                : "bg-amber-50 text-amber-600"
+              opportunity.is_paid ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"
             }`}
           >
-            {opportunity.paid}
+            {opportunity.is_paid ? "Paid" : "Volunteer"}
+          </span>
+          <span
+            className={`shrink-0 rounded-full px-3 py-0.5 text-[10px] font-medium tracking-[0.1em] uppercase ${
+              opportunity.urgency === "high" || opportunity.urgency === "critical"
+                ? "bg-red-50 text-red-600"
+                : opportunity.urgency === "medium"
+                  ? "bg-amber-50 text-amber-600"
+                  : "bg-gray-50 text-gray-500"
+            }`}
+          >
+            {opportunity.urgency}
           </span>
         </div>
 
@@ -79,9 +143,7 @@ export default function OpportunityDetail() {
           <h2 className="mb-2 text-xs font-medium tracking-[0.1em] text-gray-400 uppercase">
             Description
           </h2>
-          <p className="text-sm leading-[1.8] text-gray-600">
-            {opportunity.description}
-          </p>
+          <p className="text-sm leading-[1.8] text-gray-600">{opportunity.description}</p>
         </div>
 
         <div className="mt-8">
@@ -89,11 +151,8 @@ export default function OpportunityDetail() {
             Skills required
           </h2>
           <div className="flex flex-wrap gap-2">
-            {opportunity.skills.map((skill) => (
-              <span
-                key={skill}
-                className="rounded-full bg-brand-bg px-3 py-1 text-xs font-medium text-sky-500"
-              >
+            {opportunity.required_skills?.map((skill) => (
+              <span key={skill} className="rounded-full bg-brand-bg px-3 py-1 text-xs font-medium text-sky-500">
                 {skill}
               </span>
             ))}
@@ -101,36 +160,44 @@ export default function OpportunityDetail() {
         </div>
 
         <div className="mt-10 rounded-xl border border-border bg-[#FAFAFA]">
-          <div className="flex items-center justify-between border-b border-border px-6 py-4 last:border-b-0">
+          <div className="flex items-center justify-between border-b border-border px-6 py-4">
             <span className="text-xs tracking-[0.1em] text-gray-400 uppercase">Location</span>
             <span className="inline-flex items-center gap-1.5 text-sm text-charcoal">
               <MapPin size={14} strokeWidth={1.5} className="text-gray-400" />
-              {opportunity.area}, {opportunity.city}
+              {opportunity.location || "Not specified"}
             </span>
           </div>
-          <div className="flex items-center justify-between border-b border-border px-6 py-4 last:border-b-0">
+          <div className="flex items-center justify-between border-b border-border px-6 py-4">
             <span className="text-xs tracking-[0.1em] text-gray-400 uppercase">Deadline</span>
             <span className="inline-flex items-center gap-1.5 text-sm text-charcoal">
               <Calendar size={14} strokeWidth={1.5} className="text-gray-400" />
-              {new Date(opportunity.deadline).toLocaleDateString("en-GB", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
+              {opportunity.deadline
+                ? new Date(opportunity.deadline).toLocaleDateString("en-GB", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })
+                : "Not specified"}
             </span>
           </div>
-          <div className="flex items-center justify-between border-b border-border px-6 py-4 last:border-b-0">
+          <div className="flex items-center justify-between border-b border-border px-6 py-4">
             <span className="text-xs tracking-[0.1em] text-gray-400 uppercase">Est. hours</span>
             <span className="inline-flex items-center gap-1.5 text-sm text-charcoal">
               <Clock size={14} strokeWidth={1.5} className="text-gray-400" />
-              {opportunity.estimatedHours || '-'}
+              {opportunity.estimated_hours ? `${opportunity.estimated_hours}h` : "Not specified"}
             </span>
           </div>
-          <div className="flex items-center justify-between border-b border-border px-6 py-4 last:border-b-0">
+          <div className="flex items-center justify-between border-b border-border px-6 py-4">
             <span className="text-xs tracking-[0.1em] text-gray-400 uppercase">Posted by</span>
             <span className="inline-flex items-center gap-1.5 text-sm text-charcoal">
               <Building2 size={14} strokeWidth={1.5} className="text-gray-400" />
               {opportunity.organization}
+            </span>
+          </div>
+          <div className="flex items-center justify-between px-6 py-4">
+            <span className="text-xs tracking-[0.1em] text-gray-400 uppercase">Status</span>
+            <span className="rounded-full px-3 py-0.5 text-xs font-medium text-gray-600">
+              {opportunity.status}
             </span>
           </div>
         </div>
@@ -153,12 +220,54 @@ export default function OpportunityDetail() {
           ) : (
             <button
               onClick={handleApply}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2 text-sm font-medium text-white transition hover:bg-black/90"
+              disabled={!isAuthenticated}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2 text-sm font-medium text-white transition hover:bg-black/90 disabled:opacity-50"
             >
               Apply now
             </button>
           )}
         </div>
+
+        {reviews.length > 0 && (
+          <div className="mt-16">
+            <h2 className="font-serif text-2xl tracking-tight text-charcoal">
+              Reviews
+              {averageRating > 0 && (
+                <span className="ml-3 inline-flex items-center gap-1 text-sm font-normal text-gray-500">
+                  <Star size={14} strokeWidth={1.5} className="fill-amber-400 text-amber-400" />
+                  {averageRating.toFixed(1)} ({reviews.length})
+                </span>
+              )}
+            </h2>
+            <div className="mt-6 space-y-4">
+              {reviews.map((review) => (
+                <div key={review.id} className="rounded-xl border border-border bg-[#FAFAFA] px-5 py-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-charcoal">{review.reviewer_id}</p>
+                    <div className="flex items-center gap-0.5">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          size={12}
+                          strokeWidth={1.5}
+                          className={i < review.rating ? "fill-amber-400 text-amber-400" : "text-gray-300"}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="mt-2 text-sm leading-relaxed text-gray-600">{review.comments}</p>
+                  <p className="mt-2 text-[11px] text-gray-400">
+                    {new Date(review.created_at).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

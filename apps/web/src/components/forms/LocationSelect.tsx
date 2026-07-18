@@ -1,19 +1,82 @@
 import { CITIES, type City } from "../../constants/locations";
 
 interface LocationSelectProps {
-  city: string;
-  area: string;
-  onCityChange: (city: string) => void;
-  onAreaChange: (area: string) => void;
+  city?: string;
+  area?: string;
+  onCityChange?: (city: string) => void;
+  onAreaChange?: (area: string) => void;
+  location?: string;
+  onLocationChange?: (location: string) => void;
 }
 
 export default function LocationSelect({
-  city,
-  area,
+  city = "",
+  area = "",
   onCityChange,
   onAreaChange,
+  location = "",
+  onLocationChange,
 }: LocationSelectProps) {
+  const useSingleLocation = onLocationChange !== undefined;
+
   const selectedCity: City | undefined = CITIES.find((c) => c.name === city);
+
+  if (useSingleLocation) {
+    const [selectedCityName, selectedAreaName] = location.split(", ").filter(Boolean);
+    const cityToUse = city || selectedCityName || "";
+    const areaToUse = area || selectedAreaName || "";
+    const selectedCityObj: City | undefined = CITIES.find((c) => c.name === cityToUse);
+
+    return (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label className="mb-1.5 block text-xs font-medium tracking-[0.1em] text-gray-500 uppercase">
+            City
+          </label>
+          <select
+            value={cityToUse}
+            onChange={(e) => {
+              const newCity = e.target.value;
+              onCityChange?.(newCity);
+              onAreaChange?.("");
+              onLocationChange?.(`${newCity}, ${""}`);
+            }}
+            className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-charcoal outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20"
+          >
+            <option value="">Select city</option>
+            {CITIES.map((c) => (
+              <option key={c.name} value={c.name}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-xs font-medium tracking-[0.1em] text-gray-500 uppercase">
+            Area
+          </label>
+          <select
+            value={areaToUse}
+            onChange={(e) => {
+              const newArea = e.target.value;
+              onAreaChange?.(newArea);
+              onLocationChange?.(`${cityToUse}, ${newArea}`);
+            }}
+            disabled={!cityToUse}
+            className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-charcoal outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <option value="">Select area</option>
+            {selectedCityObj?.areas.map((a) => (
+              <option key={a.name} value={a.name}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -24,8 +87,8 @@ export default function LocationSelect({
         <select
           value={city}
           onChange={(e) => {
-            onCityChange(e.target.value);
-            onAreaChange("");
+            onCityChange?.(e.target.value);
+            onAreaChange?.("");
           }}
           className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-charcoal outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20"
         >
@@ -44,7 +107,7 @@ export default function LocationSelect({
         </label>
         <select
           value={area}
-          onChange={(e) => onAreaChange(e.target.value)}
+          onChange={(e) => onAreaChange?.(e.target.value)}
           disabled={!city}
           className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-charcoal outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20 disabled:cursor-not-allowed disabled:opacity-50"
         >

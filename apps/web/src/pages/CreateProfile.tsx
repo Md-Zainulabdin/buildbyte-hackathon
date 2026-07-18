@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { api } from "../lib/api";
 import TagInput from "../components/forms/TagInput";
 import LocationSelect from "../components/forms/LocationSelect";
 import Field from "../components/ui/Field";
@@ -25,16 +26,18 @@ const availabilityOptions = [
 
 export default function CreateProfile() {
   const navigate = useNavigate();
-  const { login, user, token } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [form, setForm] = useState<ProfileForm>({
-    name: "",
-    skills: [],
+    name: user?.name || "",
+    skills: user?.skills || [],
     city: "",
     area: "",
-    availability: "",
-    portfolio: "",
+    availability: user?.availability || "",
+    portfolio: user?.portfolio_links?.[0] || "",
   });
   const [errors, setErrors] = useState<Partial<Record<keyof ProfileForm, string>>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   function validate(): boolean {
     const errs: typeof errors = {};
@@ -48,22 +51,32 @@ export default function CreateProfile() {
     return Object.keys(errs).length === 0;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setSubmitError(null);
     if (!validate()) return;
 
-    const profile = {
-      ...form,
-      name: form.name.trim(),
-    };
+    setIsSubmitting(true);
+    try {
+      const location = `${form.city}, ${form.area}`;
+      const portfolioLinks = form.portfolio ? [form.portfolio] : [];
 
-    localStorage.setItem("profile", JSON.stringify(profile));
+      await api.patch("/users/me", {
+        name: form.name.trim(),
+        skills: form.skills,
+        location,
+        availability: form.availability,
+        portfolio_links: portfolioLinks,
+      });
 
-    if (user && token) {
-      login(token, { ...user, ...profile });
+      await refreshUser();
+      navigate("/dashboard");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to save profile";
+      setSubmitError(message);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    navigate("/opportunities");
   }
 
   function update<K extends keyof ProfileForm>(key: K, value: ProfileForm[K]) {
@@ -83,6 +96,12 @@ export default function CreateProfile() {
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-8">
+          {submitError && (
+            <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">
+              {submitError}
+            </div>
+          )}
+
           <Field label="Name" error={errors.name}>
             <input
               type="text"
@@ -94,10 +113,7 @@ export default function CreateProfile() {
           </Field>
 
           <Field label="Skills" error={errors.skills}>
-            <TagInput
-              tags={form.skills}
-              onChange={(tags) => update("skills", tags)}
-            />
+            <TagInput tags={form.skills} onChange={(tags) => update("skills", tags)} />
           </Field>
 
           <LocationSelect
@@ -107,9 +123,7 @@ export default function CreateProfile() {
             onAreaChange={(area) => update("area", area)}
           />
           {(errors.city || errors.area) && (
-            <p className="mt-1 text-xs text-red-500">
-              {errors.city || errors.area}
-            </p>
+            <p className="mt-1 text-xs text-red-500">{errors.city || errors.area}</p>
           )}
 
           <Field label="Availability" error={errors.availability}>
@@ -139,15 +153,23 @@ export default function CreateProfile() {
 
           <button
             type="submit"
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2 text-sm font-medium text-white transition hover:bg-black/90"
+            disabled={isSubmitting}
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2 text-sm font-medium text-white transition hover:bg-black/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Save profile
-            <ArrowRight size={16} strokeWidth={1.5} />
+            {isSubmitting ? (
+              <>
+                <Loader2 size={16} strokeWidth={1.5} className="animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                Save profile
+                <ArrowRight size={16} strokeWidth={1.5} />
+              </>
+            )}
           </button>
         </form>
       </div>
     </div>
   );
 }
-
-

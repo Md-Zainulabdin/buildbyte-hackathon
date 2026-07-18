@@ -1,55 +1,78 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import OpportunityCard from "../components/opportunities/OpportunityCard";
 import FilterBar from "../components/opportunities/FilterBar";
-import { CITIES } from "../constants/locations";
-import { getOpportunities, safeJSON } from "../lib/helpers";
+import { opportunitiesApi, type OpportunityResponse } from "../lib/api";
+import { applicationsApi, type ApplicationCreate } from "../lib/api";
 
 interface Filters {
   search: string;
-  city: string;
+  location: string;
   category: string;
   type: string;
 }
 
 export default function OpportunityFeed() {
+  const { isLoading: authLoading, isAuthenticated } = useAuth();
   const [filters, setFilters] = useState<Filters>({
     search: "",
-    city: "",
+    location: "",
     category: "",
     type: "",
   });
-  const [appliedIds, setAppliedIds] = useState<string[]>(() => {
-    const stored = localStorage.getItem("applications");
-    const apps = safeJSON<{ opportunityId: string }[]>(stored || "[]", []);
-    return apps.map((a) => a.opportunityId);
-  });
+  const [opportunities, setOpportunities] = useState<OpportunityResponse[]>([]);
+  const [appliedIds, setAppliedIds] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const opportunities = useMemo(() => getOpportunities(), []);
+  useEffect(() => {
+    if (authLoading) return;
+    loadOpportunities();
+    if (isAuthenticated) loadAppliedIds();
+  }, [authLoading, filters, isAuthenticated]);
 
-  const filtered = useMemo(() => {
-    return opportunities.filter((opp) => {
-      if (
-        filters.search &&
-        !opp.title.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !opp.organization.toLowerCase().includes(filters.search.toLowerCase())
-      )
-        return false;
-      if (filters.city && opp.city !== filters.city) return false;
-      if (filters.category && opp.category !== filters.category) return false;
-      if (filters.type && opp.paid !== filters.type) return false;
-      return true;
-    });
-  }, [opportunities, filters]);
+  async function loadOpportunities() {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const params: Record<string, string | boolean | undefined> = {
+        status: "open",
+      };
+      if (filters.category) params.category = filters.category;
+      if (filters.type) params.is_paid = filters.type === "Paid";
+      if (filters.location) params.location = filters.location;
+      if (filters.search) params.skills = filters.search;
 
-  function handleApply(id: string) {
-    const applications = safeJSON<Record<string, string>[]>(localStorage.getItem("applications") || "[]", []);
-    applications.push({
-      opportunityId: id,
-      appliedAt: new Date().toISOString(),
-    });
-    localStorage.setItem("applications", JSON.stringify(applications));
-    setAppliedIds((prev) => [...prev, id]);
+      const res = await opportunitiesApi.list(params);
+      setOpportunities(res.data);
+    } catch (err) {
+      setError("Failed to load opportunities");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function loadAppliedIds() {
+    try {
+      const res = await applicationsApi.listMy("provider");
+      setAppliedIds(res.data.map((a) => a.opportunity_id));
+    } catch {}
+  }
+
+  async function handleApply(id: string) {
+    if (!isAuthenticated) {
+      window.location.href = "/auth/callback?redirect=/opportunities";
+      return;
+    }
+    try {
+      await applicationsApi.apply(id, { message: "" });
+      setAppliedIds((prev) => [...prev, id]);
+    } catch (err) {
+      console.error("Apply failed:", err);
+      alert("Failed to apply. Please try again.");
+    }
   }
 
   return (
@@ -61,7 +84,11 @@ export default function OpportunityFeed() {
               Opportunities
             </h1>
             <p className="mt-2 text-sm text-gray-500">
-              {filtered.length === 0 ? "No opportunities" : `${filtered.length} opportunit${filtered.length === 1 ? "y" : "ies"} found`}
+              {isLoading
+                ? "Loading..."
+                : opportunities.length === 0
+                  ? "No opportunities"
+                  : `${opportunities.length} opportunit${opportunities.length === 1 ? "y" : "ies"} found`}
             </p>
           </div>
           <Link
@@ -73,24 +100,27 @@ export default function OpportunityFeed() {
         </div>
 
         <div className="mt-8">
-          <FilterBar
-            filters={filters}
-            cities={CITIES.map((c) => c.name)}
-            onChange={setFilters}
-          />
+          <FilterBar filters={filters} onChange={setFilters} />
         </div>
 
-        {filtered.length === 0 ? (
+        {isLoading ? (
           <div className="mt-20 text-center">
-            <p className="font-serif text-2xl text-gray-400">
-              No opportunities yet
-            </p>
+            <div className="mx-auto mb-6 h-8 w-8 animate-pulse rounded-full border-2 border-gray-300 border-t-gray-600" />
+            <p className="font-serif text-2xl text-gray-500">Loading opportunities...</p>
+          </div>
+        ) : error ? (
+          <div className="mt-20 text-center">
+            <p className="font-serif text-2xl text-red-500">{error}</p>
+            <button onClick={loadOpportunities} className="mt-4 text-sm text-sky-500 underline">
+              Retry
+            </button>
+          </div>
+        ) : opportunities.length === 0 ? (
+          <div className="mt-20 text-center">
+            <p className="font-serif text-2xl text-gray-400">No opportunities yet</p>
             <p className="mt-2 text-sm text-gray-400">
               Be the first to{" "}
-              <Link
-                to="/opportunities/new"
-                className="text-sky-500 underline"
-              >
+              <Link to="/opportunities/new" className="text-sky-500 underline">
                 post one
               </Link>
               .
@@ -98,7 +128,7 @@ export default function OpportunityFeed() {
           </div>
         ) : (
           <div className="mt-8 grid gap-5 md:grid-cols-2">
-            {filtered.map((opp) => (
+            {opportunities.map((opp) => (
               <OpportunityCard
                 key={opp.id}
                 opportunity={opp}
