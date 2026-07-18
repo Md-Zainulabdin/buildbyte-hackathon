@@ -1,23 +1,9 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import OpportunityCard from "../components/opportunities/OpportunityCard";
 import FilterBar from "../components/opportunities/FilterBar";
 import { CITIES } from "../constants/locations";
-import dummyOpportunities from "../constants/dummy-opportunities.json";
-
-interface Opportunity {
-  id: string;
-  title: string;
-  organization: string;
-  description: string;
-  skills: string[];
-  city: string;
-  area: string;
-  category: string;
-  paid: string;
-  deadline: string;
-  estimatedHours: string;
-  createdAt: string;
-}
+import { getOpportunities, safeJSON } from "../lib/helpers";
 
 interface Filters {
   search: string;
@@ -35,14 +21,11 @@ export default function OpportunityFeed() {
   });
   const [appliedIds, setAppliedIds] = useState<string[]>(() => {
     const stored = localStorage.getItem("applications");
-    return stored ? JSON.parse(stored).map((a: { opportunityId: string }) => a.opportunityId) : [];
+    const apps = safeJSON<{ opportunityId: string }[]>(stored || "[]", []);
+    return apps.map((a) => a.opportunityId);
   });
 
-  const opportunities: Opportunity[] = useMemo(() => {
-    const stored = localStorage.getItem("opportunities");
-    const parsed = stored ? JSON.parse(stored) : [];
-    return parsed.length > 0 ? parsed : (dummyOpportunities as Opportunity[]);
-  }, []);
+  const opportunities = useMemo(() => getOpportunities(), []);
 
   const filtered = useMemo(() => {
     return opportunities.filter((opp) => {
@@ -60,7 +43,7 @@ export default function OpportunityFeed() {
   }, [opportunities, filters]);
 
   function handleApply(id: string) {
-    const applications = JSON.parse(localStorage.getItem("applications") || "[]");
+    const applications = safeJSON<Record<string, string>[]>(localStorage.getItem("applications") || "[]", []);
     applications.push({
       opportunityId: id,
       appliedAt: new Date().toISOString(),
@@ -78,15 +61,15 @@ export default function OpportunityFeed() {
               Opportunities
             </h1>
             <p className="mt-2 text-sm text-gray-500">
-              {filtered.length} opportunity{filtered.length !== 1 ? "ies" : "y"} found
+              {filtered.length === 0 ? "No opportunities" : `${filtered.length} opportunit${filtered.length === 1 ? "y" : "ies"} found`}
             </p>
           </div>
-          <a
-            href="/opportunities/new"
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white transition hover:bg-black/90"
+          <Link
+            to="/opportunities/new"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-medium text-white transition hover:bg-black/90"
           >
             Post one
-          </a>
+          </Link>
         </div>
 
         <div className="mt-8">
@@ -104,12 +87,12 @@ export default function OpportunityFeed() {
             </p>
             <p className="mt-2 text-sm text-gray-400">
               Be the first to{" "}
-              <a
-                href="/opportunities/new"
+              <Link
+                to="/opportunities/new"
                 className="text-sky-500 underline"
               >
                 post one
-              </a>
+              </Link>
               .
             </p>
           </div>

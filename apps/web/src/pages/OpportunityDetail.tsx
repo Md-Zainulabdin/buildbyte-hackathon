@@ -1,49 +1,32 @@
 import { useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, MapPin, Calendar, Clock, Building2 } from "lucide-react";
-import dummyOpportunities from "../constants/dummy-opportunities.json";
-
-interface Opportunity {
-  id: string;
-  title: string;
-  organization: string;
-  description: string;
-  skills: string[];
-  city: string;
-  area: string;
-  category: string;
-  paid: string;
-  deadline: string;
-  estimatedHours: string;
-  createdAt: string;
-}
+import { getOpportunities, safeJSON } from "../lib/helpers";
+import type { Opportunity } from "../types/opportunity";
 
 export default function OpportunityDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const opportunity = useMemo(() => {
-    const stored = localStorage.getItem("opportunities");
-    const parsed = stored ? JSON.parse(stored) : [];
-    const all = parsed.length > 0 ? parsed : dummyOpportunities;
-    return all.find((o: Opportunity) => o.id === id) as Opportunity | undefined;
+    return getOpportunities().find((o: Opportunity) => o.id === id);
   }, [id]);
 
   const applied = useMemo(() => {
     const stored = localStorage.getItem("applications");
-    const apps = stored ? JSON.parse(stored) : [];
-    return apps.some((a: { opportunityId: string }) => a.opportunityId === id);
+    const apps = safeJSON<{ opportunityId: string }[]>(stored || "[]", []);
+    return apps.some((a) => a.opportunityId === id);
   }, [id]);
 
   const completed = useMemo(() => {
     const stored = localStorage.getItem("completedTasks");
-    const all = stored ? JSON.parse(stored) : [];
-    return all.some((s: { opportunityId: string }) => s.opportunityId === id);
+    const all = safeJSON<{ opportunityId: string }[]>(stored || "[]", []);
+    return all.some((s) => s.opportunityId === id);
   }, [id]);
 
   function handleApply() {
     if (!id) return;
-    const applications = JSON.parse(localStorage.getItem("applications") || "[]");
+    const applications = safeJSON<Record<string, string>[]>(localStorage.getItem("applications") || "[]", []);
     applications.push({ opportunityId: id, appliedAt: new Date().toISOString() });
     localStorage.setItem("applications", JSON.stringify(applications));
     navigate("/opportunities");
@@ -64,7 +47,7 @@ export default function OpportunityDetail() {
 
   return (
     <div className="min-h-dvh bg-white px-6 py-28 sm:px-10 sm:py-32">
-      <div className="mx-auto max-w-[680px]">
+      <div className="mx-auto max-w-[1000px]">
         <Link
           to="/opportunities"
           className="mb-8 inline-flex items-center gap-1.5 text-sm text-gray-500 transition hover:text-charcoal"
@@ -152,25 +135,25 @@ export default function OpportunityDetail() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-wrap gap-3">
+        <div className="mt-10">
           {completed ? (
             <Link
               to={`/tasks/${id}/review`}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-50 px-8 py-3.5 text-sm font-medium text-emerald-600 transition hover:bg-emerald-100 sm:px-10"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-50 px-5 py-2 text-sm font-medium text-emerald-600 transition hover:bg-emerald-100"
             >
               View submission
             </Link>
           ) : applied ? (
             <Link
               to={`/tasks/${id}/review`}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-8 py-3.5 text-sm font-medium text-white transition hover:bg-black/90 sm:px-10"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2 text-sm font-medium text-white transition hover:bg-black/90"
             >
               Submit completed work
             </Link>
           ) : (
             <button
               onClick={handleApply}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-8 py-3.5 text-sm font-medium text-white transition hover:bg-black/90 sm:px-10"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2 text-sm font-medium text-white transition hover:bg-black/90"
             >
               Apply now
             </button>

@@ -1,17 +1,6 @@
 import { Link } from "react-router-dom";
 import { MapPin, Calendar } from "lucide-react";
-
-interface Opportunity {
-  id: string;
-  title: string;
-  organization: string;
-  skills: string[];
-  city: string;
-  area: string;
-  category: string;
-  paid: string;
-  deadline: string;
-}
+import type { Opportunity } from "../../types/opportunity";
 
 interface OpportunityCardProps {
   opportunity: Opportunity;
@@ -68,7 +57,7 @@ export default function OpportunityCard({
         <button
           onClick={() => onApply(opportunity.id)}
           disabled={applied}
-          className={`inline-flex items-center gap-1.5 rounded-full px-6 py-2.5 text-base font-medium transition ${
+          className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-medium transition ${
             applied
               ? "cursor-not-allowed bg-gray-100 text-gray-400"
               : "bg-black text-white hover:bg-black/90"
