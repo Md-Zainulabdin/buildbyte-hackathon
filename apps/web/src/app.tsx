@@ -6,6 +6,7 @@ import AuthCallback from "./pages/AuthCallback";
 import CreateProfile from "./pages/CreateProfile";
 import PostOpportunity from "./pages/PostOpportunity";
 import OpportunityFeed from "./pages/OpportunityFeed";
+import OpportunityDetail from "./pages/OpportunityDetail";
 import Applications from "./pages/Applications";
 import CompletedTask from "./pages/CompletedTask";
 
@@ -20,6 +21,7 @@ export default function App() {
             <Route path="/profile/create" element={<CreateProfile />} />
             <Route path="/opportunities/new" element={<PostOpportunity />} />
             <Route path="/opportunities" element={<OpportunityFeed />} />
+            <Route path="/opportunities/:id" element={<OpportunityDetail />} />
             <Route path="/applications" element={<Applications />} />
             <Route path="/tasks/:id/review" element={<CompletedTask />} />
           </Routes>
