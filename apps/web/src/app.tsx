@@ -1,25 +1,30 @@
-import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import ErrorBoundary from "./components/ErrorBoundary";
+import LandingPage from "./pages/LandingPage";
+import AuthCallback from "./pages/AuthCallback";
+import CreateProfile from "./pages/CreateProfile";
+import PostOpportunity from "./pages/PostOpportunity";
+import OpportunityFeed from "./pages/OpportunityFeed";
+import Applications from "./pages/Applications";
+import CompletedTask from "./pages/CompletedTask";
 
 export default function App() {
-  const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    fetch("http://localhost:8000/api/health")
-      .then((res) => res.json())
-      .then((data) => setMessage(data.message))
-      .catch(() => {});
-  }, []);
-
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-white p-6">
-      <div className="flex flex-col items-center gap-6 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-          BuildByte Hackathon
-        </h1>
-        <div className="rounded-xl border border-gray-200 px-6 py-4 text-gray-700">
-          {message || "Loading..."}
-        </div>
-      </div>
-    </div>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/profile/create" element={<CreateProfile />} />
+            <Route path="/opportunities/new" element={<PostOpportunity />} />
+            <Route path="/opportunities" element={<OpportunityFeed />} />
+            <Route path="/applications" element={<Applications />} />
+            <Route path="/tasks/:id/review" element={<CompletedTask />} />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
