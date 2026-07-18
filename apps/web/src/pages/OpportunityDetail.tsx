@@ -35,6 +35,12 @@ export default function OpportunityDetail() {
     return apps.some((a: { opportunityId: string }) => a.opportunityId === id);
   }, [id]);
 
+  const completed = useMemo(() => {
+    const stored = localStorage.getItem("completedTasks");
+    const all = stored ? JSON.parse(stored) : [];
+    return all.some((s: { opportunityId: string }) => s.opportunityId === id);
+  }, [id]);
+
   function handleApply() {
     if (!id) return;
     const applications = JSON.parse(localStorage.getItem("applications") || "[]");
@@ -146,18 +152,29 @@ export default function OpportunityDetail() {
           </div>
         </div>
 
-        <div className="mt-10">
-          <button
-            onClick={handleApply}
-            disabled={applied}
-            className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-8 py-3.5 text-sm font-medium transition sm:w-auto sm:px-10 ${
-              applied
-                ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                : "bg-black text-white hover:bg-black/90"
-            }`}
-          >
-            {applied ? "Already applied" : "Apply now"}
-          </button>
+        <div className="mt-10 flex flex-wrap gap-3">
+          {completed ? (
+            <Link
+              to={`/tasks/${id}/review`}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-50 px-8 py-3.5 text-sm font-medium text-emerald-600 transition hover:bg-emerald-100 sm:px-10"
+            >
+              View submission
+            </Link>
+          ) : applied ? (
+            <Link
+              to={`/tasks/${id}/review`}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-8 py-3.5 text-sm font-medium text-white transition hover:bg-black/90 sm:px-10"
+            >
+              Submit completed work
+            </Link>
+          ) : (
+            <button
+              onClick={handleApply}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-8 py-3.5 text-sm font-medium text-white transition hover:bg-black/90 sm:px-10"
+            >
+              Apply now
+            </button>
+          )}
         </div>
       </div>
     </div>
