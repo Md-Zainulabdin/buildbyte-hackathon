@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import TagInput from "../components/forms/TagInput";
 import LocationSelect from "../components/forms/LocationSelect";
+import Field from "../components/ui/Field";
 import { CATEGORIES } from "../constants/categories";
+import { generateId } from "../lib/helpers";
 
 interface OpportunityForm {
   title: string;
@@ -58,7 +60,7 @@ export default function PostOpportunity() {
       title: form.title.trim(),
       organization: form.organization.trim(),
       description: form.description.trim(),
-      id: crypto.randomUUID(),
+      id: generateId(),
       createdAt: new Date().toISOString(),
     };
 
@@ -111,7 +113,7 @@ export default function PostOpportunity() {
               onChange={(e) => update("description", e.target.value)}
               placeholder="Describe the task, what kind of help you need, and any relevant details..."
               rows={4}
-              className="w-full resize-none rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-charcoal outline-none placeholder:text-gray-400 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20"
+              className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-charcoal outline-none placeholder:text-gray-400 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20"
             />
           </Field>
 
@@ -187,6 +189,7 @@ export default function PostOpportunity() {
                 type="date"
                 value={form.deadline}
                 onChange={(e) => update("deadline", e.target.value)}
+                min={new Date().toISOString().split("T")[0]}
                 className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-charcoal outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20"
               />
             </Field>
@@ -205,7 +208,7 @@ export default function PostOpportunity() {
 
           <button
             type="submit"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-black px-8 py-3.5 text-sm font-medium text-white transition hover:bg-black/90"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2 text-sm font-medium text-white transition hover:bg-black/90"
           >
             Post opportunity
             <ArrowRight size={16} strokeWidth={1.5} />
@@ -216,22 +219,4 @@ export default function PostOpportunity() {
   );
 }
 
-function Field({
-  label,
-  error,
-  children,
-}: {
-  label: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="mb-1.5 block text-xs font-medium tracking-[0.1em] text-gray-500 uppercase">
-        {label}
-      </label>
-      {children}
-      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
-    </div>
-  );
-}
+

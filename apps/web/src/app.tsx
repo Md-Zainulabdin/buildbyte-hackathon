@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
+import Navbar from "./components/layout/Navbar";
 import LandingPage from "./pages/LandingPage";
 import AuthCallback from "./pages/AuthCallback";
 import CreateProfile from "./pages/CreateProfile";
@@ -15,6 +16,7 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <AuthProvider>
+          <Navbar />
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/auth/callback" element={<AuthCallback />} />

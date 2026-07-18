@@ -1,22 +1,8 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { MapPin, Calendar, Clock } from "lucide-react";
-import dummyOpportunities from "../constants/dummy-opportunities.json";
-
-interface Opportunity {
-  id: string;
-  title: string;
-  organization: string;
-  description: string;
-  skills: string[];
-  city: string;
-  area: string;
-  category: string;
-  paid: string;
-  deadline: string;
-  estimatedHours: string;
-  createdAt: string;
-}
+import { getOpportunities, safeJSON } from "../lib/helpers";
+import type { Opportunity } from "../types/opportunity";
 
 interface Application {
   opportunityId: string;
@@ -26,19 +12,15 @@ interface Application {
 export default function Applications() {
   const applications = useMemo(() => {
     const stored = localStorage.getItem("applications");
-    return stored ? JSON.parse(stored) : [];
+    return safeJSON<Application[]>(stored || "[]", []);
   }, []);
 
-  const opportunities = useMemo(() => {
-    const stored = localStorage.getItem("opportunities");
-    const parsed = stored ? JSON.parse(stored) : [];
-    return parsed.length > 0 ? parsed : dummyOpportunities;
-  }, []);
+  const opportunities = useMemo(() => getOpportunities(), []);
 
   const completedIds = useMemo(() => {
     const stored = localStorage.getItem("completedTasks");
-    const all = stored ? JSON.parse(stored) : [];
-    return new Set(all.map((s: { opportunityId: string }) => s.opportunityId));
+    const all = safeJSON<{ opportunityId: string }[]>(stored || "[]", []);
+    return new Set(all.map((s) => s.opportunityId));
   }, []);
 
   const appliedOpps = useMemo(() => {
@@ -51,12 +33,12 @@ export default function Applications() {
           ? { ...opp, appliedAt: app.appliedAt, completed: completedIds.has(opp.id) }
           : null;
       })
-      .filter(Boolean);
+      .filter((x): x is Opportunity & { appliedAt: string; completed: boolean } => x !== null);
   }, [applications, opportunities, completedIds]);
 
   return (
     <div className="min-h-dvh bg-white px-6 py-28 sm:px-10 sm:py-32">
-      <div className="mx-auto max-w-[680px]">
+      <div className="mx-auto max-w-[1000px]">
         <div>
           <h1 className="font-serif text-4xl leading-[1.15] tracking-tight text-charcoal sm:text-5xl">
             Applications

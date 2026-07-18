@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import TagInput from "../components/forms/TagInput";
 import LocationSelect from "../components/forms/LocationSelect";
+import Field from "../components/ui/Field";
 
 interface ProfileForm {
   name: string;
@@ -138,7 +139,7 @@ export default function CreateProfile() {
 
           <button
             type="submit"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-black px-8 py-3.5 text-sm font-medium text-white transition hover:bg-black/90"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2 text-sm font-medium text-white transition hover:bg-black/90"
           >
             Save profile
             <ArrowRight size={16} strokeWidth={1.5} />
@@ -149,24 +150,4 @@ export default function CreateProfile() {
   );
 }
 
-function Field({
-  label,
-  error,
-  children,
-}: {
-  label: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="mb-1.5 block text-xs font-medium tracking-[0.1em] text-gray-500 uppercase">
-        {label}
-      </label>
-      {children}
-      {error && (
-        <p className="mt-1 text-xs text-red-500">{error}</p>
-      )}
-    </div>
-  );
-}
+

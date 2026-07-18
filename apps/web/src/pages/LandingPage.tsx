@@ -1,12 +1,15 @@
-import Navbar from "../components/layout/Navbar";
 import Badge from "../components/ui/Badge";
 import { GOOGLE_AUTH_URL } from "../constants";
 
 export default function LandingPage() {
   return (
     <div className="bg-white">
-      <Navbar />
       <HeroSection />
+      <StatsSection />
+      <HowItWorksSection />
+      <FeaturesSection />
+      <CTASection />
+      <FooterSection />
     </div>
   );
 }
@@ -39,7 +42,7 @@ function HeroSection() {
         <div className="mt-10">
           <a
             href={GOOGLE_AUTH_URL}
-            className="inline-flex items-center gap-3 rounded-full border border-[#E0E0E0] bg-white px-7 py-3.5 text-sm font-medium text-charcoal shadow-sm transition hover:border-[#CCC] hover:shadow-md"
+            className="inline-flex items-center gap-3 rounded-full bg-black px-5 py-2 text-sm font-medium text-white transition hover:bg-black/90"
           >
             <GoogleIcon />
             Sign in with Google
@@ -47,5 +50,144 @@ function HeroSection() {
         </div>
       </div>
     </section>
+  );
+}
+
+function HowItWorksSection() {
+  const steps = [
+    {
+      number: "01",
+      title: "Post a need",
+      description: "Describe what you need help with, set a deadline, and choose whether it's paid or volunteer.",
+    },
+    {
+      number: "02",
+      title: "Get matched",
+      description: "Skilled people in your community find and apply to your opportunity.",
+    },
+    {
+      number: "03",
+      title: "Complete & grow",
+      description: "Work gets done, trust is built, and your community becomes stronger.",
+    },
+  ];
+
+  return (
+    <section className="border-t border-border px-6 py-24 sm:py-32">
+      <div className="mx-auto max-w-[1100px]">
+        <div className="text-center">
+          <Badge>How it works</Badge>
+          <h2 className="mt-5 font-serif text-[clamp(28px,5vw,48px)] leading-[1.1] tracking-tight text-charcoal">
+            Three simple steps
+          </h2>
+        </div>
+        <div className="mt-16 grid gap-12 md:grid-cols-3">
+          {steps.map((step) => (
+            <div key={step.number} className="text-center">
+              <span className="font-serif text-5xl text-sky-500/30">{step.number}</span>
+              <h3 className="mt-4 font-serif text-2xl text-charcoal">{step.title}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-gray-500">{step.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StatsSection() {
+  return (
+    <section className="border-t border-border bg-surface px-6 py-24 sm:py-32">
+      <div className="mx-auto max-w-[1100px]">
+        <div className="grid gap-8 text-center md:grid-cols-3">
+          <div>
+            <p className="font-serif text-[clamp(36px,5vw,56px)] leading-none text-sky-500">12</p>
+            <p className="mt-3 text-sm font-medium tracking-[0.1em] text-gray-500 uppercase">Cities active</p>
+          </div>
+          <div>
+            <p className="font-serif text-[clamp(36px,5vw,56px)] leading-none text-sky-500">50+</p>
+            <p className="mt-3 text-sm font-medium tracking-[0.1em] text-gray-500 uppercase">Skills listed</p>
+          </div>
+          <div>
+            <p className="font-serif text-[clamp(36px,5vw,56px)] leading-none text-sky-500">100%</p>
+            <p className="mt-3 text-sm font-medium tracking-[0.1em] text-gray-500 uppercase">Community driven</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FeaturesSection() {
+  const features = [
+    {
+      title: "Hyperlocal matching",
+      description: "Opportunities are tied to specific cities and areas, so you find help close to home.",
+    },
+    {
+      title: "Skill-based discovery",
+      description: "Post opportunities by required skills, and find people who actually match what you need.",
+    },
+    {
+      title: "Paid or volunteer",
+      description: "Both paid gigs and volunteer opportunities live here. Choose what works for you.",
+    },
+  ];
+
+  return (
+    <section className="border-t border-border px-6 py-24 sm:py-32">
+      <div className="mx-auto max-w-[1100px]">
+        <div className="text-center">
+          <Badge>Why SkillBridge</Badge>
+          <h2 className="mt-5 font-serif text-[clamp(28px,5vw,48px)] leading-[1.1] tracking-tight text-charcoal">
+            Built for local communities
+          </h2>
+        </div>
+        <div className="mt-16 grid gap-10 md:grid-cols-3">
+          {features.map((f) => (
+            <div key={f.title}>
+              <h3 className="font-serif text-xl text-charcoal">{f.title}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-gray-500">{f.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CTASection() {
+  return (
+    <section className="border-t border-border px-6 py-24 text-center sm:py-32">
+      <div className="mx-auto max-w-[520px]">
+        <Badge>Get started</Badge>
+        <h2 className="mt-5 font-serif text-[clamp(28px,5vw,48px)] leading-[1.1] tracking-tight text-charcoal">
+          Ready to join your community?
+        </h2>
+        <p className="mx-auto mt-4 max-w-[380px] text-sm leading-relaxed text-gray-500">
+          Sign up in seconds and start posting or applying to opportunities near you.
+        </p>
+        <div className="mt-8">
+          <a
+            href={GOOGLE_AUTH_URL}
+            className="inline-flex items-center gap-3 rounded-full bg-black px-5 py-2 text-sm font-medium text-white transition hover:bg-black/90"
+          >
+            <GoogleIcon />
+            Sign in with Google
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FooterSection() {
+  return (
+    <footer className="border-t border-border px-6 py-10">
+      <div className="mx-auto flex max-w-[1200px] items-center justify-between text-xs text-gray-400">
+        <span className="font-serif text-base text-charcoal">SkillBridge</span>
+        <span>&copy; {new Date().getFullYear()} SkillBridge. All rights reserved.</span>
+      </div>
+    </footer>
   );
 }
