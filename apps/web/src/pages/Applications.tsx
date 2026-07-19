@@ -72,7 +72,7 @@ export default function Applications() {
 
         {isLoading ? (
           <div className="mt-20 text-center">
-            <div className="mx-auto mb-6 h-8 w-8 animate-pulse rounded-full border-2 border-gray-300 border-t-gray-600" />
+            <div className="mx-auto mb-6 h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
             <p className="font-serif text-2xl text-gray-500">Loading applications...</p>
           </div>
         ) : error ? (
@@ -120,6 +120,11 @@ export default function Applications() {
                         >
                           {opp.is_paid ? "Paid" : "Volunteer"}
                         </span>
+                        {opp.is_paid && opp.payment_amount && (
+                          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-600">
+                            PKR {opp.payment_amount.toLocaleString()}
+                          </span>
+                        )}
                       </div>
                       <h3 className="font-serif text-xl leading-snug tracking-tight text-charcoal group-hover:text-sky-500 transition-colors">
                         {opp.title}

@@ -59,6 +59,11 @@ export default function OpportunityCard({
           <span className={`inline-flex items-center gap-1.5 ${urgencyColors[opportunity.urgency] || "bg-gray-50 text-gray-500"} rounded-full px-2 py-0.5 text-[10px] font-medium tracking-[0.15em] uppercase`}>
             {opportunity.urgency}
           </span>
+          {opportunity.is_paid && opportunity.payment_amount && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-600">
+              PKR {opportunity.payment_amount.toLocaleString()}
+            </span>
+          )}
         </div>
       </Link>
 

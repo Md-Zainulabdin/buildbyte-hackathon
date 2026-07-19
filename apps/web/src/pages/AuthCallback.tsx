@@ -2,28 +2,30 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
+
 export default function AuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { handleGoogleCallback, refreshUser, isAuthenticated } = useAuth();
+  const { token, setToken, refreshUser, isAuthenticated } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [handled, setHandled] = useState(false);
 
   useEffect(() => {
     if (handled) return;
     const code = searchParams.get("code");
-    const token = searchParams.get("token");
+    const urlToken = searchParams.get("token");
     const redirect = searchParams.get("redirect");
 
     async function process() {
       try {
-        if (code) {
-          await handleGoogleCallback(code);
-        } else if (token) {
-        }
-        await refreshUser();
-        if (isAuthenticated) {
-          navigate(redirect || "/dashboard", { replace: true });
+        if (urlToken) {
+          localStorage.setItem("token", urlToken);
+          setToken(urlToken);
+          const user = await refreshUser();
+          const needsProfile = !user?.skills?.length || !user?.location;
+          navigate(needsProfile ? "/profile/create" : redirect || "/dashboard", { replace: true });
+        } else if (code) {
+          navigate(redirect || "/profile/create", { replace: true });
         } else {
           navigate("/profile/create", { replace: true });
         }
@@ -36,7 +38,7 @@ export default function AuthCallback() {
     }
 
     process();
-  }, [searchParams, handleGoogleCallback, refreshUser, navigate, isAuthenticated, handled]);
+  }, [searchParams, setToken, refreshUser, navigate, isAuthenticated, handled]);
 
   if (error) {
     return (
@@ -55,7 +57,7 @@ export default function AuthCallback() {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-white">
       <div className="text-center">
-        <div className="mx-auto mb-6 h-8 w-8 animate-pulse rounded-full border-2 border-gray-300 border-t-gray-600" />
+        <div className="mx-auto mb-6 h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
         <p className="font-serif text-2xl text-gray-500">Signing you in...</p>
       </div>
     </div>

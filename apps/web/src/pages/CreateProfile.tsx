@@ -9,6 +9,7 @@ import Field from "../components/ui/Field";
 
 interface ProfileForm {
   name: string;
+  bio: string;
   skills: string[];
   city: string;
   area: string;
@@ -24,14 +25,22 @@ const availabilityOptions = [
   "Flexible",
 ];
 
+function parseLocation(location: string | null): { city: string; area: string } {
+  if (!location) return { city: "", area: "" };
+  const parts = location.split(", ");
+  return { city: parts[0] || "", area: parts[1] || "" };
+}
+
 export default function CreateProfile() {
   const navigate = useNavigate();
   const { user, refreshUser } = useAuth();
+  const initialLocation = parseLocation(user?.location ?? null);
   const [form, setForm] = useState<ProfileForm>({
     name: user?.name || "",
+    bio: user?.bio || "",
     skills: user?.skills || [],
-    city: "",
-    area: "",
+    city: initialLocation.city,
+    area: initialLocation.area,
     availability: user?.availability || "",
     portfolio: user?.portfolio_links?.[0] || "",
   });
@@ -63,6 +72,7 @@ export default function CreateProfile() {
 
       await api.patch("/users/me", {
         name: form.name.trim(),
+        bio: form.bio.trim() || null,
         skills: form.skills,
         location,
         availability: form.availability,
@@ -108,6 +118,16 @@ export default function CreateProfile() {
               value={form.name}
               onChange={(e) => update("name", e.target.value)}
               placeholder="Your full name"
+              className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-charcoal outline-none placeholder:text-gray-400 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20"
+            />
+          </Field>
+
+          <Field label="Bio (optional)">
+            <textarea
+              value={form.bio}
+              onChange={(e) => update("bio", e.target.value)}
+              placeholder="Tell the community a bit about yourself..."
+              rows={3}
               className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-charcoal outline-none placeholder:text-gray-400 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20"
             />
           </Field>

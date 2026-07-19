@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import TagInput from "../components/forms/TagInput";
 import LocationSelect from "../components/forms/LocationSelect";
 import Field from "../components/ui/Field";
-import { opportunitiesApi, type OpportunityCreate } from "../lib/api";
+import { opportunitiesApi, type OpportunityCreate, type OpportunityResponse } from "../lib/api";
 
 const CATEGORIES = [
   { value: "paid_work", label: "Paid Work" },
@@ -26,9 +26,19 @@ const URGENCY_OPTIONS = [
   { value: "critical", label: "Critical" },
 ];
 
+function parseLocation(location: string | null): { city: string; area: string } {
+  if (!location) return { city: "", area: "" };
+  const parts = location.split(", ");
+  return { city: parts[0] || "", area: parts[1] || "" };
+}
+
 export default function PostOpportunity() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isLoading: authLoading } = useAuth();
+
+  const editId = searchParams.get("edit");
+  const isEditing = !!editId;
 
   const [form, setForm] = useState({
     title: "",
@@ -47,6 +57,36 @@ export default function PostOpportunity() {
   const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isLoadingOpp, setIsLoadingOpp] = useState(isEditing);
+
+  useEffect(() => {
+    if (!editId) return;
+    (async () => {
+      try {
+        const res = await opportunitiesApi.get(editId);
+        const opp = res.data;
+        const loc = parseLocation(opp.location);
+        setForm({
+          title: opp.title,
+          description: opp.description,
+          organization: opp.organization,
+          city: loc.city,
+          area: loc.area,
+          required_skills: opp.required_skills || [],
+          is_paid: opp.is_paid,
+          payment_amount: opp.payment_amount ?? undefined,
+          deadline: opp.deadline ? opp.deadline.slice(0, 10) : "",
+          estimated_hours: opp.estimated_hours ?? undefined,
+          urgency: opp.urgency,
+          category: opp.category,
+        });
+      } catch {
+        setSubmitError("Failed to load opportunity for editing.");
+      } finally {
+        setIsLoadingOpp(false);
+      }
+    })();
+  }, [editId]);
 
   function validate(): boolean {
     const errs: typeof errors = {};
@@ -89,11 +129,15 @@ export default function PostOpportunity() {
     };
 
     try {
-      await opportunitiesApi.create(payload);
+      if (isEditing && editId) {
+        await opportunitiesApi.update(editId, payload);
+      } else {
+        await opportunitiesApi.create(payload);
+      }
       navigate("/opportunities");
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { detail?: string } } };
-      setSubmitError(axiosErr.response?.data?.detail || "Failed to post opportunity. Please try again.");
+      setSubmitError(axiosErr.response?.data?.detail || "Failed to save opportunity. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -104,11 +148,11 @@ export default function PostOpportunity() {
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
   }
 
-  if (authLoading) {
+  if (authLoading || isLoadingOpp) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-white">
         <div className="text-center">
-          <div className="mx-auto mb-6 h-8 w-8 animate-pulse rounded-full border-2 border-gray-300 border-t-gray-600" />
+          <div className="mx-auto mb-6 h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
           <p className="font-serif text-2xl text-gray-500">Loading...</p>
         </div>
       </div>
@@ -119,10 +163,10 @@ export default function PostOpportunity() {
     <div className="min-h-dvh bg-white px-6 py-28 sm:px-10 sm:py-32">
       <div className="mx-auto max-w-[520px]">
         <h1 className="font-serif text-4xl leading-[1.15] tracking-tight text-charcoal sm:text-5xl">
-          Post an opportunity
+          {isEditing ? "Edit opportunity" : "Post an opportunity"}
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-gray-500">
-          Describe what you need and find the right person from your community.
+          {isEditing ? "Update the details of your opportunity." : "Describe what you need and find the right person from your community."}
         </p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-8">
@@ -285,11 +329,11 @@ export default function PostOpportunity() {
             {isSubmitting ? (
               <>
                 <Loader2 size={16} strokeWidth={1.5} className="animate-spin" />
-                Posting...
+                {isEditing ? "Saving..." : "Posting..."}
               </>
             ) : (
               <>
-                Post opportunity
+                {isEditing ? "Save changes" : "Post opportunity"}
                 <ArrowRight size={16} strokeWidth={1.5} />
               </>
             )}

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api",
   headers: { "Content-Type": "application/json" },
 });
 
@@ -56,6 +56,7 @@ export interface OpportunityCreate {
   estimated_hours?: number;
   urgency: "low" | "medium" | "high" | "critical";
   category: string;
+  status?: "open" | "in_progress" | "completed" | "cancelled";
 }
 
 export interface ApplicationResponse {

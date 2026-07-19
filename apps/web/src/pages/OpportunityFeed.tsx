@@ -105,7 +105,7 @@ export default function OpportunityFeed() {
 
         {isLoading ? (
           <div className="mt-20 text-center">
-            <div className="mx-auto mb-6 h-8 w-8 animate-pulse rounded-full border-2 border-gray-300 border-t-gray-600" />
+            <div className="mx-auto mb-6 h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
             <p className="font-serif text-2xl text-gray-500">Loading opportunities...</p>
           </div>
         ) : error ? (

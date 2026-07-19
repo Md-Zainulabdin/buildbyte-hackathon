@@ -10,6 +10,8 @@ import OpportunityFeed from "./pages/OpportunityFeed";
 import OpportunityDetail from "./pages/OpportunityDetail";
 import Applications from "./pages/Applications";
 import CompletedTask from "./pages/CompletedTask";
+import UserDashboard from "./pages/UserDashboard";
+import CreatorDashboard from "./pages/CreatorDashboard";
 
 export default function App() {
   return (
@@ -26,6 +28,8 @@ export default function App() {
             <Route path="/opportunities/:id" element={<OpportunityDetail />} />
             <Route path="/applications" element={<Applications />} />
             <Route path="/tasks/:id/review" element={<CompletedTask />} />
+            <Route path="/dashboard" element={<UserDashboard />} />
+            <Route path="/dashboard/creator" element={<CreatorDashboard />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
