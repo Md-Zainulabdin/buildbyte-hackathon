@@ -18,18 +18,27 @@ export default function Navbar() {
           >
             Opportunities
           </Link>
-          <Link
-            to="/applications"
-            className="text-sm text-gray-500 transition hover:text-charcoal"
-          >
-            Applications
-          </Link>
 
           {isAuthenticated && (
-            <div className="flex items-center gap-3">
-              <span className="hidden text-sm text-gray-500 sm:block">
+            <div className="flex items-center gap-4">
+              <Link
+                to="/applications"
+                className="text-sm text-gray-500 transition hover:text-charcoal"
+              >
+                Applications
+              </Link>
+              <Link
+                to="/profile/create"
+                className="text-sm text-gray-500 transition hover:text-charcoal"
+              >
+                Profile
+              </Link>
+              <Link
+                to="/dashboard"
+                className="hidden text-sm text-gray-500 transition hover:text-charcoal sm:block"
+              >
                 {user?.name}
-              </span>
+              </Link>
               <button
                 onClick={logout}
                 className="rounded-full bg-black px-5 py-2 text-sm font-medium text-white transition hover:bg-black/90"

@@ -1,54 +1,110 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
-import type { User } from "../types/auth";
+import { api } from "../lib/api";
+import type { UserResponse, TokenResponse } from "../lib/api";
 
 interface AuthContextType {
-  user: User | null;
+  user: UserResponse | null;
   token: string | null;
+  setToken: (token: string | null) => void;
   isAuthenticated: boolean;
-  login: (token: string, user: User) => void;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
+  googleLogin: () => void;
   logout: () => void;
+  refreshUser: () => Promise<UserResponse | null>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(() =>
-    localStorage.getItem("token"),
-  );
-  const [user, setUser] = useState<User | null>(() => {
-    const stored = localStorage.getItem("user");
-    return stored ? JSON.parse(stored) : null;
-  });
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
+  const [user, setUser] = useState<UserResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    api.interceptors.request.use((config) => {
+      const storedToken = localStorage.getItem("token");
+      if (storedToken) config.headers.Authorization = `Bearer ${storedToken}`;
+      return config;
+    });
+
+    api.interceptors.response.use(
+      (res) => res,
+      async (error) => {
+        if (error.response?.status === 401) {
+          setToken(null);
+          setUser(null);
+          localStorage.removeItem("token");
+        }
+        return Promise.reject(error);
+      }
+    );
+  }, []);
+
+  async function fetchUser(): Promise<UserResponse | null> {
+    try {
+      const res = await api.get<UserResponse>("/users/me");
+      setUser(res.data);
+      return res.data;
+    } catch {
+      setUser(null);
+      return null;
+    }
+  }
 
   useEffect(() => {
     if (token) {
-      localStorage.setItem("token", token);
+      fetchUser().finally(() => setIsLoading(false));
     } else {
-      localStorage.removeItem("token");
+      setIsLoading(false);
     }
   }, [token]);
 
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem("user", JSON.stringify(user));
-    } else {
-      localStorage.removeItem("user");
-    }
-  }, [user]);
+  async function login(email: string, password: string) {
+    const res = await api.post<TokenResponse>("/auth/login", { email, password });
+    const { access_token, user } = res.data;
+    setToken(access_token);
+    localStorage.setItem("token", access_token);
+    setUser(user);
+  }
 
-  const login = (newToken: string, newUser: User) => {
-    setToken(newToken);
-    setUser(newUser);
-  };
+  async function register(name: string, email: string, password: string) {
+    const res = await api.post<TokenResponse>("/auth/register", { name, email, password });
+    const { access_token, user } = res.data;
+    setToken(access_token);
+    localStorage.setItem("token", access_token);
+    setUser(user);
+  }
 
-  const logout = () => {
+  function googleLogin() {
+    window.location.href = `${api.defaults.baseURL}/auth/google/login`;
+  }
+
+  function logout() {
     setToken(null);
     setUser(null);
-  };
+    localStorage.removeItem("token");
+  }
+
+  async function refreshUser(): Promise<UserResponse | null> {
+    return await fetchUser();
+  }
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isAuthenticated: !!token, login, logout }}
+      value={{
+        user,
+        token,
+        setToken,
+        isAuthenticated: !!token,
+        isLoading,
+        login,
+        register,
+        googleLogin,
+        logout,
+        refreshUser,
+      }}
     >
       {children}
     </AuthContext.Provider>
