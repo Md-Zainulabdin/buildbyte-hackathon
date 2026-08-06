@@ -1,4 +1,4 @@
-# SkillBridge — Frontend
+# Kaarvan — Frontend
 
 React 19 + TypeScript + Vite + Tailwind CSS.
 

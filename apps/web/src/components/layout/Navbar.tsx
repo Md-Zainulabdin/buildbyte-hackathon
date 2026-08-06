@@ -8,7 +8,7 @@ export default function Navbar() {
     <nav className="fixed left-0 right-0 top-0 z-50 bg-white">
       <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-5 sm:px-10">
         <Link to="/" className="font-serif text-2xl text-charcoal">
-          SkillBridge
+          Kaarvan
         </Link>
 
         <div className="flex items-center gap-5">

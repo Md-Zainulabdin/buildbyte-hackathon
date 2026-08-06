@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="SkillBridge API", lifespan=lifespan)
+app = FastAPI(title="Kaarvan API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -40,4 +40,4 @@ app.include_router(matching_router)
 
 @app.get("/api/health")
 async def health_check():
-    return {"status": "ok", "message": "SkillBridge API is running"}
+    return {"status": "ok", "message": "Kaarvan API is running"}

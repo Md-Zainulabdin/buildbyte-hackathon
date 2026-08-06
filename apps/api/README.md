@@ -1,4 +1,4 @@
-# SkillBridge — Backend
+# Kaarvan — Backend
 
 FastAPI + SQLAlchemy (async) + PostgreSQL.
 
@@ -13,7 +13,7 @@ uvicorn app.main:app --reload --port 8000
 Create `.env`:
 
 ```env
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/skillbridge
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/kaarvan
 JWT_SECRET_KEY=your-secret-key
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...

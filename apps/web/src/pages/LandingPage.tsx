@@ -138,7 +138,7 @@ function FeaturesSection() {
     <section className="border-t border-border px-6 py-24 sm:py-32">
       <div className="mx-auto max-w-[1100px]">
         <div className="text-center">
-          <Badge>Why SkillBridge</Badge>
+          <Badge>Why Kaarvan</Badge>
           <h2 className="mt-5 font-serif text-[clamp(28px,5vw,48px)] leading-[1.1] tracking-tight text-charcoal">
             Built for local communities
           </h2>
@@ -185,8 +185,8 @@ function FooterSection() {
   return (
     <footer className="border-t border-border px-6 py-10">
       <div className="mx-auto flex max-w-[1200px] items-center justify-between text-xs text-gray-400">
-        <span className="font-serif text-base text-charcoal">SkillBridge</span>
-        <span>&copy; {new Date().getFullYear()} SkillBridge. All rights reserved.</span>
+        <span className="font-serif text-base text-charcoal">Kaarvan</span>
+        <span>&copy; {new Date().getFullYear()} Kaarvan. All rights reserved.</span>
       </div>
     </footer>
   );

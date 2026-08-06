@@ -1,4 +1,4 @@
-# Team Localhost Wale Represents — SkillBridge
+# Team Localhost Wale Represents — Kaarvan
 
 **Members:** Muhammad Zain-ul-Abdin Ansari, Wasi Muzammil
 
@@ -12,7 +12,7 @@ The problem isn't a lack of skilled people — it's the absence of a trusted, lo
 
 ## Solution
 
-SkillBridge is a **hyperlocal opportunity and skill-matching platform** that connects communities with verified individuals based on skills, location, and availability. Unlike generic freelancing marketplaces, it focuses on community-driven requests and local impact.
+Kaarvan is a **hyperlocal opportunity and skill-matching platform** that connects communities with verified individuals based on skills, location, and availability. Unlike generic freelancing marketplaces, it focuses on community-driven requests and local impact.
 
 **Skill Providers** (students, freelancers, volunteers, alumni) use it to build experience, earn money, volunteer, and expand their network.
 
@@ -45,7 +45,7 @@ venv\Scripts\pip install -r requirements.txt
 
 Create `.env` in `apps/api/` (database URL, JWT secret, Google OAuth keys, FRONTEND_URL, CORS_ORIGINS) and `apps/web/` (VITE_API_URL). See the README in each folder for details.
 
-Ensure PostgreSQL is running with a `skillbridge` database, then:
+Ensure PostgreSQL is running with a `kaarvan` database, then:
 
 ```
 npm run dev
